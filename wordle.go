@@ -1,7 +1,10 @@
 package wordle
 
 import (
+	"errors"
 	"strings"
+
+	words "github.com/rchezhiyan/wordle/words"
 )
 
 const (
@@ -98,8 +101,43 @@ func (g *guess) updateLettersWithWord(word [wordSize]byte) {
 // if the guess is invalid.
 func (w *wordleState) appendGuess(g guess) error {
 
-	guesses := &w.guesses
+	if w.currGuess >= maxGuesses {
+		return errors.New("max guesses reached")
+	}
+	if len(g) != wordSize {
+		return errors.New("invalid guess length")
+	}
+	if !words.IsWord(g.string()) {
+		return errors.New("invalid guess word")
+	}
+	w.guesses[w.currGuess] = g
+	w.currGuess++
+	return nil
 
-	guesses.append(g)
+}
+
+// isWordGuessed returns true when the latest guess is the correct word
+func (w *wordleState) isWordGuessed() bool {
+
+	g := w.guesses[w.currGuess-1]
+
+	for _, l := range g {
+		if l.status != correct {
+			return false
+		}
+	}
+
+	return true
+
+}
+
+// shouldEndGame checks if the game should end.
+func (w *wordleState) shouldEndGame() bool {
+
+	if w.currGuess >= maxGuesses || w.isWordGuessed() {
+		return true
+	} else {
+		return false
+	}
 
 }

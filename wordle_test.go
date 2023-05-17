@@ -1,6 +1,10 @@
 package wordle
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/rchezhiyan/wordle/words"
+)
 
 func TestNewWordleState(t *testing.T) {
 
@@ -91,4 +95,80 @@ func TestUpdateLettersWithWord(t *testing.T) {
 
 	}
 
+}
+
+func TestAppendGuess(t *testing.T) {
+	ws := newWordleState("HELLO")
+
+	err := ws.appendGuess(newGuess("YIELD"))
+
+	if err == nil {
+		if ws.currGuess != 1 {
+			t.Errorf("currGuess = %d; wnat 1", ws.currGuess)
+		}
+	}
+
+	for i := 0; i < 5; i++ {
+		guess := newGuess(words.GetWord())
+		if err := ws.appendGuess(guess); err != nil {
+			t.Errorf("newGuess() returned an error: %v", err)
+		}
+	}
+}
+
+func TestAppendGuessError(t *testing.T) {
+
+	ws := newWordleState("HELLO")
+
+	// var g guess
+	// Add six guesses
+	for i := 0; i < 6; i++ {
+		g := newGuess(words.GetWord())
+		ws.appendGuess(g)
+	}
+
+	g := newGuess(words.GetWord())
+	if err := ws.appendGuess(g); err == nil {
+		t.Errorf("appendGuess sholud result in an error")
+	}
+
+}
+
+func TestIsWordGuessed(t *testing.T) {
+	ws := newWordleState("HELLO")
+	g := newGuess("HELLO")
+
+	g.updateLettersWithWord(ws.word)
+	ws.appendGuess(g)
+
+	if !ws.isWordGuessed() {
+		t.Errorf("isWordGuessed should return true")
+	}
+}
+
+func TestShouldEndGameCorrect(t *testing.T) {
+	ws := newWordleState("HELLO")
+	g := newGuess("HELLO")
+
+	g.updateLettersWithWord(ws.word)
+	ws.appendGuess(g)
+
+	if !ws.shouldEndGame() {
+		t.Errorf("shouldEndGame should return true")
+	}
+
+}
+
+func TestShouldEndGameMaxGuesses(t *testing.T) {
+	ws := newWordleState("HELLO")
+
+	// add 6 wrong guesses
+	for i := 0; i < 6; i++ {
+		g := newGuess(words.GetWord())
+		g.updateLettersWithWord(ws.word)
+		ws.appendGuess(g)
+	}
+	if !ws.shouldEndGame() {
+		t.Errorf("shouldEndGame should return true")
+	}
 }
